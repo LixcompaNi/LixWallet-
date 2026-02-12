@@ -1,186 +1,105 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>LIX SYSTEM CORE</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
-        :root { 
-            --bg: #000000; 
-            --surface: #0a0a0a; 
-            --border: #1a1a1a; 
-            --accent: #ffffff; 
-            --muted: #666666; 
-        }
-        
         body { 
-            background: var(--bg); 
-            color: var(--accent); 
-            font-family: 'Inter', -apple-system, sans-serif; 
-            margin: 0; 
-            padding: 0; 
-            letter-spacing: -0.02em;
+            background: #000; color: #00ff41; 
+            font-family: 'Courier', monospace; margin: 0; padding: 20px;
+            font-size: 13px; text-transform: uppercase;
         }
-
-        .app-container { padding: 32px 24px; }
-
-        /* Status Header */
-        header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            margin-bottom: 48px; 
+        .line { margin-bottom: 5px; border-bottom: 1px solid #003300; padding-bottom: 2px; }
+        .flex { display: flex; justify-content: space-between; }
+        .bold { font-weight: bold; color: #fff; font-size: 16px; }
+        .dim { color: #006600; }
+        
+        .main-frame { border: 2px solid #003300; padding: 15px; background: #050505; }
+        .cmd-line { color: #fff; border-left: 10px solid #00ff41; padding-left: 10px; margin: 20px 0; }
+        
+        .action-area { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 30px; }
+        .cmd-btn { 
+            border: 1px solid #00ff41; padding: 10px; text-align: center; 
+            cursor: pointer; transition: 0.1s;
         }
-        .sys-info { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; color: var(--muted); text-transform: uppercase; }
-        .network-status { display: flex; align-items: center; gap: 6px; font-size: 10px; color: #00ff41; font-weight: 700; }
-        .dot { width: 4px; height: 4px; background: #00ff41; border-radius: 50%; }
-
-        /* Balance Section */
-        .balance-section { margin-bottom: 64px; }
-        .label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; }
-        .amount { font-size: 52px; font-weight: 700; letter-spacing: -0.04em; margin-bottom: 8px; }
-        .sub-balance { font-size: 14px; color: var(--muted); font-weight: 500; }
-
-        /* Grid Controls */
-        .control-grid { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 1px; 
-            background: var(--border); 
-            border: 1px solid var(--border);
-            margin-bottom: 48px;
-        }
-        .ctrl-item { 
-            background: var(--bg); 
-            padding: 24px; 
-            text-align: left; 
-            transition: 0.2s;
-        }
-        .ctrl-item:active { background: var(--surface); }
-        .ctrl-label { font-size: 10px; font-weight: 800; color: var(--muted); text-transform: uppercase; margin-bottom: 4px; }
-        .ctrl-val { font-size: 16px; font-weight: 600; }
-
-        /* Asset List */
-        .assets-header { border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 24px; }
-        .asset-row { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            padding: 16px 0; 
-            border-bottom: 1px solid var(--border);
-        }
-        .asset-info { display: flex; flex-direction: column; }
-        .asset-t1 { font-size: 14px; font-weight: 600; }
-        .asset-t2 { font-size: 12px; color: var(--muted); }
-        .asset-price { text-align: right; font-family: monospace; font-size: 14px; }
-
-        /* Terminal Overlay */
-        #terminal { 
-            display: none; position: fixed; inset: 0; background: #000; z-index: 100; 
-            padding: 40px; flex-direction: column; 
-        }
-        .term-input { 
-            background: transparent; border: none; border-bottom: 1px solid #333; 
-            color: #00ff41; font-family: monospace; font-size: 20px; outline: none; padding: 10px 0;
-        }
+        .cmd-btn:active { background: #00ff41; color: #000; }
+        
+        #console-log { height: 120px; overflow: hidden; font-size: 11px; color: #008800; margin-top: 20px; }
     </style>
 </head>
 <body>
 
-<div class="app-container">
-    <header>
-        <div class="sys-info" id="user-id">ID: AUTH_PENDING</div>
-        <div class="network-status"><div class="dot"></div> ENCRYPTED NODE</div>
-    </header>
-
-    <div class="balance-section">
-        <div class="label" onclick="openTerminal()">Total Assets Value</div>
-        <div class="amount" id="main-val">$0.00</div>
-        <div class="sub-balance" id="btc-equiv">0.00000000 BTC</div>
+<div class="main-frame">
+    <div class="line flex">
+        <span>Terminal: LIX-CORE-V3</span>
+        <span id="ts">2026-02-12 08:44:12</span>
+    </div>
+    <div class="line flex">
+        <span class="dim">Auth_Session:</span>
+        <span id="user_id">...</span>
+    </div>
+    
+    <div class="cmd-line">
+        <div class="dim">Total_Liquidity_Index:</div>
+        <div class="bold" id="balance" onclick="root()">$ 0.00</div>
     </div>
 
-    <div class="control-grid">
-        <div class="ctrl-item" onclick="action('SEND')">
-            <div class="ctrl-label">Action</div>
-            <div class="ctrl-val">Transfer</div>
-        </div>
-        <div class="ctrl-item" onclick="action('RECEIVE')">
-            <div class="ctrl-label">Vault</div>
-            <div class="ctrl-val">Deposit</div>
-        </div>
+    <div class="line flex">
+        <span>Status:</span>
+        <span style="color: #fff;">[ ACTIVE_ENCRYPTION ]</span>
+    </div>
+    <div class="line flex">
+        <span>Node:</span>
+        <span>GITHUB_PAGES_DEPLOY_01</span>
     </div>
 
-    <div class="assets-header">
-        <div class="label">Market Portfolio</div>
+    <div class="action-area">
+        <div class="cmd-btn" onclick="run('TRANSFER')">Run_Transfer</div>
+        <div class="cmd-btn" onclick="location.reload()">Reset_Session</div>
     </div>
 
-    <div id="assets">
-        <div class="asset-row">
-            <div class="asset-info"><span class="asset-t1">Bitcoin</span><span class="asset-t2">BTC / USD</span></div>
-            <div class="asset-price" id="asset-btc">0.0000</div>
-        </div>
-        <div class="asset-row">
-            <div class="asset-info"><span class="asset-t1">LIX Protocol</span><span class="asset-t2">LIX / Native</span></div>
-            <div class="asset-price" id="asset-lix">0.00</div>
-        </div>
+    <div id="console-log">
+        > system.boot_success<br>
+        > protocols.aes256.init<br>
+        > core.balance_fetch_completed<br>
     </div>
-</div>
-
-<div id="terminal">
-    <div class="label" style="color:#00ff41">> SYSTEM_OVERRIDE_INIT</div>
-    <input type="number" class="term-input" id="term-val" autofocus placeholder="0.00">
-    <button onclick="saveTerm()" style="background:#fff; color:#000; border:none; padding:15px; margin-top:20px; font-weight:bold; cursor:pointer">EXECUTE</button>
 </div>
 
 <script>
     const tg = window.Telegram.WebApp;
-    let state = {
-        balance: parseFloat(localStorage.getItem('lix_core_v3')) || 542000.00,
-        user: tg.initDataUnsafe?.user?.first_name || "MASTER"
-    };
+    let bal = parseFloat(localStorage.getItem('lix_concrete')) || 542000.00;
 
     function init() {
         tg.ready();
-        tg.expand();
-        tg.headerColor = '#000000';
-        document.getElementById('user-id').innerText = `USER: ${state.user.toUpperCase()}`;
-        render();
+        document.getElementById('user_id').innerText = (tg.initDataUnsafe?.user?.username || "ROOT_USER").toUpperCase();
+        setInterval(() => {
+            document.getElementById('ts').innerText = new Date().toISOString().replace('T', ' ').split('.')[0];
+        }, 1000);
+        update();
     }
 
-    function render() {
-        const val = state.balance;
-        document.getElementById('main-val').innerText = `$${val.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
-        document.getElementById('btc-equiv').innerText = `${(val / 64200).toFixed(8)} BTC`;
-        document.getElementById('asset-btc').innerText = (val / 64200).toFixed(4);
-        document.getElementById('asset-lix').innerText = (val * 12.5).toLocaleString('en-US');
-        
-        localStorage.setItem('lix_core_v3', val);
+    function update() {
+        document.getElementById('balance').innerText = '$ ' + bal.toLocaleString('en-US', {minimumFractionDigits: 2});
+        localStorage.setItem('lix_concrete', bal);
     }
 
-    function action(type) {
-        tg.HapticFeedback.impactOccurred('heavy');
-        const a = prompt(`AMOUNT TO ${type}:`);
-        if(a) alert(`Request ID: ${Math.random().toString(36).substr(2, 9).toUpperCase()}\nStatus: Broadcasted to Network`);
-    }
-
-    function openTerminal() {
-        if(prompt("ROOT_PASS:") === "2026") {
-            document.getElementById('terminal').style.display = 'flex';
+    function run(type) {
+        tg.HapticFeedback.impactOccurred('medium');
+        let amt = prompt(`[SYSTEM] Enter amount for ${type}:`);
+        if(amt) {
+            const log = document.getElementById('console-log');
+            log.innerHTML += `> exec.${type.toLowerCase()}: success [${Math.random().toString(16).slice(2,8)}]<br>`;
         }
     }
 
-    function saveTerm() {
-        const v = document.getElementById('term-val').value;
-        if(v) {
-            state.balance = parseFloat(v);
-            render();
-            document.getElementById('terminal').style.display = 'none';
+    function root() {
+        if(prompt("ROOT_PASS:") === "2026") {
+            let n = prompt("NEW_VAL:");
+            if(n) { bal = parseFloat(n); update(); }
         }
     }
 
     window.onload = init;
 </script>
-
 </body>
 </html>
