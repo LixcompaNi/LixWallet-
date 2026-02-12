@@ -2,135 +2,145 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LIX QUANTUM TERMINAL</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>LIX INSTITUTIONAL</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <style>
-        :root { --bg: #000; --green: #00ff41; --border: #1a1a1a; --text: #888; }
-        body { background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; margin: 0; overflow-x: hidden; }
+        :root { --bg: #000; --accent: #fff; --gray: #111; --text-muted: #666; --green: #00ff41; }
+        body { background: var(--bg); color: #fff; font-family: -apple-system, sans-serif; margin: 0; padding: 0; padding-bottom: 80px; }
         
-        .header { padding: 15px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-        .logo { font-weight: 900; letter-spacing: 2px; font-size: 14px; }
-        .live-indicator { display: flex; align-items: center; gap: 5px; color: var(--green); font-size: 10px; font-weight: bold; }
-        .dot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; animation: blink 1s infinite; }
+        /* UI Elements */
+        .header { padding: 20px; border-bottom: 1px solid var(--gray); display: flex; justify-content: space-between; align-items: center; }
+        .balance-box { padding: 30px 20px; background: linear-gradient(180deg, #050505 0%, #000 100%); }
+        .label { font-size: 10px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px; margin-bottom: 8px; }
+        .amount { font-size: 42px; font-weight: 700; letter-spacing: -2px; }
 
-        .balance-card { padding: 30px 20px; border-bottom: 1px solid var(--border); }
-        .label { color: var(--text); font-size: 11px; text-transform: uppercase; margin-bottom: 5px; }
-        .total-amount { font-size: 38px; font-weight: 700; letter-spacing: -1px; }
+        /* Navigation Bottom Bar */
+        .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.95); backdrop-filter: blur(10px); 
+                    display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--gray); padding-bottom: 20px; z-index: 1000; }
+        .nav-item { padding: 15px 0; text-align: center; color: var(--text-muted); font-size: 10px; font-weight: 600; cursor: pointer; }
+        .nav-item.active { color: #fff; }
+        .nav-icon { font-size: 20px; display: block; margin-bottom: 4px; }
 
-        /* Chart Widget */
-        #chart_container { height: 250px; border-bottom: 1px solid var(--border); background: #000; }
+        /* Screens */
+        .screen { display: none; padding: 20px; animation: fadeIn 0.3s; }
+        .screen.active { display: block; }
 
-        .market-grid { padding: 20px; }
-        .asset-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #111; }
-        .asset-meta { font-size: 14px; font-weight: 600; }
-        .asset-price { text-align: right; font-family: monospace; }
-        .change-up { color: var(--green); font-size: 11px; }
+        /* Exchange Card */
+        .method-card { background: var(--gray); border-radius: 12px; padding: 16px; margin-bottom: 12px; border: 1px solid #222; }
+        .method-title { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+        .method-desc { font-size: 11px; color: var(--text-muted); }
 
-        .actions-nav { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border-bottom: 1px solid var(--border); }
-        .nav-item { background: #000; padding: 15px 0; text-align: center; font-size: 10px; font-weight: bold; color: var(--text); cursor: pointer; }
-        .nav-item:active { color: #fff; background: #0a0a0a; }
+        #chart_container { height: 300px; width: 100%; border-radius: 12px; overflow: hidden; margin-top: 10px; border: 1px solid var(--gray); }
 
-        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
-        
-        #admin-panel { display: none; position: fixed; inset: 0; background: #000; z-index: 100; padding: 40px; flex-direction: column; }
-        input { background: #111; border: 1px solid #333; color: #fff; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <div class="logo">LIX CORE V3</div>
-    <div class="live-indicator"><div class="dot"></div> DATA STREAM ACTIVE</div>
+    <div style="font-weight: 900; font-size: 12px;">LIX SYSTEM // CORE</div>
+    <div style="font-size: 10px; color: var(--green);">● SECURE SESSION</div>
 </div>
 
-<div class="balance-card">
-    <div class="label" onclick="openAdmin()">Total Equity Value</div>
-    <div class="total-amount" id="main-bal">$0.00</div>
-    <div style="font-size: 12px; color: var(--text); margin-top: 5px;">Est. 24h Yield: <span class="change-up">+1.42%</span></div>
-</div>
-
-<div class="actions-nav">
-    <div class="nav-item" onclick="alert('Module locked')">TRADE</div>
-    <div class="nav-item" onclick="alert('Scanning network...')">MINT</div>
-    <div class="nav-item" onclick="alert('Wallet address: 0xLIX...7F2')">RECEIVE</div>
-    <div class="nav-item" onclick="location.reload()">SYNC</div>
-</div>
-
-<div id="chart_container"></div>
-
-<div class="market-grid">
-    <div class="label">Live Assets</div>
-    <div class="asset-row">
-        <div class="asset-meta">Bitcoin (BTC)</div>
-        <div class="asset-price" id="btc-p">64,210.50<br><span class="change-up">+0.5%</span></div>
+<div id="wallet-screen" class="screen active">
+    <div class="balance-box">
+        <div class="label" onclick="openRoot()">Total Portfolio Value</div>
+        <div class="amount" id="main-bal">$0.00</div>
     </div>
-    <div class="asset-row">
-        <div class="asset-meta">LIX Protocol (Native)</div>
-        <div class="asset-price" id="lix-p">1.042<br><span class="change-up">+12.4%</span></div>
+    <div class="label">Live Market (BTC/USD)</div>
+    <div id="chart_container"></div>
+</div>
+
+<div id="exchange-screen" class="screen">
+    <div class="label">Withdraw to Fiat / Telegram</div>
+    
+    <div class="method-card" onclick="processWithdraw('Telegram Stars')">
+        <div class="method-title">Telegram Stars</div>
+        <div class="method-desc">Instant conversion to TG Stars wallet</div>
+    </div>
+
+    <div class="method-card" onclick="processWithdraw('P2P Bank Transfer')">
+        <div class="method-title">P2P Bank Transfer</div>
+        <div class="method-desc">Visa/Mastercard, Sber, Tinkoff (15-30 min)</div>
+    </div>
+
+    <div class="method-card" onclick="processWithdraw('Crypto Bridge')">
+        <div class="method-title">Crypto Bridge (LTC/USDT)</div>
+        <div class="method-desc">Direct on-chain withdrawal</div>
     </div>
 </div>
 
-<div id="admin-panel">
-    <h3>PROTOCOL OVERRIDE</h3>
-    <input type="number" id="new-bal" placeholder="Set USD Liquidity">
-    <button onclick="saveAdmin()" style="padding: 15px; background: #fff; border: none; font-weight: bold;">APPLY</button>
+<div class="nav-bar">
+    <div class="nav-item active" onclick="showScreen('wallet', this)">
+        <span class="nav-icon">📁</span>WALLET
+    </div>
+    <div class="nav-item" onclick="showScreen('exchange', this)">
+        <span class="nav-icon">🔄</span>EXCHANGE
+    </div>
+    <div class="nav-item" onclick="alert('Market depth module loading...')">
+        <span class="nav-icon">📊</span>MARKET
+    </div>
+    <div class="nav-item" onclick="alert('Settings encrypted')">
+        <span class="nav-icon">⚙️</span>SYSTEM
+    </div>
 </div>
 
 <script>
     const tg = window.Telegram.WebApp;
-    let balance = parseFloat(localStorage.getItem('lix_final_v4')) || 542000.00;
+    let balance = parseFloat(localStorage.getItem('lix_corp_bal')) || 1000000.00;
 
     function init() {
         tg.ready();
         tg.expand();
         updateUI();
-        
-        // Запуск графика
-        new TradingView.widget({
-            "autosize": true,
-            "symbol": "BINANCE:BTCUSDT",
-            "interval": "30",
-            "timezone": "Etc/UTC",
-            "theme": "dark",
-            "style": "1",
-            "locale": "en",
-            "toolbar_bg": "#f1f3f6",
-            "enable_publishing": false,
-            "hide_top_toolbar": true,
-            "save_image": false,
-            "container_id": "chart_container"
-        });
+        loadChart();
+    }
 
-        // Имитация живых цен
-        setInterval(() => {
-            const btc = 64000 + (Math.random() * 500);
-            document.getElementById('btc-p').innerHTML = `${btc.toFixed(2)}<br><span class="change-up">+0.82%</span>`;
-        }, 3000);
+    function loadChart() {
+        new TradingView.widget({
+            "autosize": true, "symbol": "BINANCE:BTCUSDT", "interval": "60",
+            "timezone": "Etc/UTC", "theme": "dark", "style": "1",
+            "container_id": "chart_container", "hide_top_toolbar": true, "hide_legend": true
+        });
     }
 
     function updateUI() {
         document.getElementById('main-bal').innerText = '$' + balance.toLocaleString('en-US', {minimumFractionDigits: 2});
-        localStorage.setItem('lix_final_v4', balance);
+        localStorage.setItem('lix_corp_bal', balance);
     }
 
-    function openAdmin() {
-        if(prompt("ADMIN_KEY:") === "2026") {
-            document.getElementById('admin-panel').style.display = 'flex';
+    function showScreen(screenId, el) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        document.getElementById(screenId + '-screen').classList.add('active');
+        el.classList.add('active');
+        tg.HapticFeedback.impactOccurred('light');
+    }
+
+    function processWithdraw(method) {
+        const amt = prompt(`Enter amount for ${method}:`);
+        if(amt && !isNaN(amt)) {
+            if(parseFloat(amt) <= balance) {
+                alert(`WITHDRAWAL INITIALIZED\nMethod: ${method}\nAmount: $${amt}\nStatus: Verification in progress...`);
+                balance -= parseFloat(amt);
+                updateUI();
+            } else {
+                alert("ERROR: Insufficient liquidity.");
+            }
         }
     }
 
-    function saveAdmin() {
-        const val = document.getElementById('new-bal').value;
-        if(val) {
-            balance = parseFloat(val);
-            updateUI();
-            document.getElementById('admin-panel').style.display = 'none';
+    function openRoot() {
+        if(prompt("ROOT_ACCESS:") === "2026") {
+            const n = prompt("SET_LIQUIDITY:");
+            if(n) { balance = parseFloat(n); updateUI(); }
         }
     }
 
     window.onload = init;
 </script>
+
 </body>
 </html>
