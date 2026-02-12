@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>LIX SYSTEM CORE</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        /* ПРЕМИАЛЬНЫЙ ДИЗАЙН (Вместо style.css) */
+        :root { --bg: #000000; --card: #0c0c0c; --accent: #ff0000; --text: #ffffff; }
+        body { background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; margin: 0; overflow: hidden; }
+        
+        .main-container { padding: 25px; height: 100vh; display: flex; flex-direction: column; }
+        
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .logo { font-size: 10px; font-weight: 900; letter-spacing: 3px; color: #444; }
+        .user-tag { font-size: 20px; font-weight: 800; margin-top: 5px; }
+
+        .bank-card { 
+            background: linear-gradient(145deg, #0f0f0f, #050505);
+            border: 1px solid #1a1a1a;
+            border-radius: 30px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+        }
+        .label { font-size: 10px; font-weight: 800; color: #555; letter-spacing: 1px; margin-bottom: 10px; }
+        .balance-val { font-size: 45px; font-weight: 900; letter-spacing: -2px; }
+
+        .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .btn { 
+            background: #0c0c0c; border: 1px solid #1a1a1a; color: #fff; 
+            padding: 20px; border-radius: 20px; font-size: 10px; font-weight: 800;
+            text-align: center; transition: 0.2s;
+        }
+        .btn:active { transform: scale(0.95); background: #151515; }
+
+        /* АДМИНКА */
+        .admin-modal {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.98);
+            z-index: 100; flex-direction: column; padding: 40px; font-family: monospace;
+        }
+        .admin-btn { 
+            background: #111; color: #00ff00; border: 1px solid #222; 
+            padding: 15px; margin-bottom: 10px; text-align: left; font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        <header>
+            <div>
+                <div class="logo">LIX CORE</div>
+                <div id="user-name" class="user-tag">...</div>
+            </div>
+            <div onclick="openAdmin()" style="opacity: 0.2; font-size: 20px;">⚙️</div>
+        </header>
+
+        <div class="bank-card" ondblclick="openAdmin()">
+            <div class="label">TOTAL BALANCE</div>
+            <div id="balance" class="balance-val">$0</div>
+        </div>
+
+        <div class="btn-row">
+            <div class="btn" onclick="makeTransfer()">TRANSFER</div>
+            <div class="btn" onclick="location.reload()">REFRESH</div>
+        </div>
+    </div>
+
+    <div id="admin-modal" class="admin-modal">
+        <h2 style="color: #00ff00;">> ROOT_TERMINAL</h2>
+        <button class="admin-btn" onclick="setBalance()">> SET_BAL</button>
+        <button class="admin-btn" onclick="localStorage.clear(); location.reload();">> WIPE_SYSTEM</button>
+        <div onclick="closeAdmin()" style="margin-top: auto; color: red; text-align: center;">[ EXIT ]</div>
+    </div>
+
+    <script>
+        /* ЛОГИКА (Твой код из app.js) */
+        const tg = window.Telegram.WebApp;
+        
+        const BankState = {
+            user: tg.initDataUnsafe?.user || { first_name: "Admin" },
+            balance: parseFloat(localStorage.getItem('lix_balance')) || 542000.00
+        };
+
+        function initApp() {
+            tg.ready();
+            tg.expand();
+            document.getElementById('user-name').innerText = BankState.user.first_name.toUpperCase();
+            updateUI();
+        }
+
+        function updateUI() {
+            document.getElementById('balance').innerText = `$${BankState.balance.toLocaleString('en-US')}`;
+            localStorage.setItem('lix_balance', BankState.balance);
+        }
+
+        function openAdmin() {
+            const pass = prompt("CODE:");
+            if (pass === "LIX-ADMIN-2026-X") {
+                document.getElementById('admin-modal').style.display = 'flex';
+            }
+        }
+
+        function closeAdmin() { document.getElementById('admin-modal').style.display = 'none'; }
+
+        function setBalance() {
+            const val = prompt("NEW BAL:");
+            if (val) { BankState.balance = parseFloat(val); updateUI(); }
+        }
+
+        function makeTransfer() {
+            const amt = prompt("AMOUNT:");
+            if (amt && amt <= BankState.balance) {
+                BankState.balance -= parseFloat(amt);
+                updateUI();
+                tg.HapticFeedback.notificationOccurred('success');
+            }
+        }
+
+        window.onload = initApp;
+    </script>
+</body>
+</html>
